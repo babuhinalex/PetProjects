@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from schema import PostGet
 from datetime import datetime
 from sqlalchemy import text
+from loguru import logger
 
 
 def get_model_path(path: str) -> str:
@@ -21,6 +22,7 @@ def load_models():
     model_path = get_model_path("catboost_model_final.cbm")
     from_file = CatBoostClassifier()
     from_file.load_model(model_path)
+    logger.info(f"Loading model")
     return from_file
 
 
@@ -34,10 +36,10 @@ def batch_load_sql(query: str) -> pd.DataFrame:
     conn = engine.connect().execution_options(stream_results=True)
     chunks = []
     for chunk_dataframe in pd.read_sql(query, conn, chunksize=CHUNKSIZE):
+        logger.info(f"Got chunk {len(chunks)}: {len(chunk_dataframe)}")
         chunks.append(chunk_dataframe)
     conn.close()
     return pd.concat(chunks, ignore_index=True)
-
 
 # def load_features(id: int) -> list:
 #     conn_uri = ("postgresql://robot-startml-ro:pheiph0hahj1Vaif@postgres.lab.karpov.courses:6432/startml")
@@ -101,44 +103,43 @@ def batch_load_sql(query: str) -> pd.DataFrame:
 #     return [PostGet(**{"id": i,
 #                        "text": df[df.post_id == i].text.values[0],
 #                        "topic": df[df.post_id == i].topic.values[0]}) for i in final]
-def load_features() -> list:
-    conn_uri = ("postgresql://robot-startml-ro:pheiph0hahj1Vaif@postgres.lab.karpov.courses:6432/startml")
-
-    engine = create_engine(conn_uri)
-    conn = engine.connect().execution_options(stream_results=True)
-
-    post_query = ("""SELECT * FROM public.post_info_dl""")
-
-    user_query = text(f"""
-        SELECT
-            user_id,
-            gender,
-            age,
-            country,
-            city,
-            exp_group,
-            os,
-            source
-        FROM public.user_data 
-        WHERE user_id = {id}
-        """)
-
-    feed_query = text(f"""
-    SELECT distinct user_id, post_id
-    FROM public.feed_action
-    WHERE action='like' and user_id = {id}
-    """)
-
-    post_like = batch_load_sql(feed_query)
-
-    post_info = pd.read_sql(post_query, con=conn)
-    # post_info.drop('index', axis=1, inplace=True)
-
-    user_info = pd.read_sql(user_query, con=conn)
-    # user_info.drop('index', axis=1, inplace=True)
-
-    return [post_like, post_info, user_info]
-
+# def load_features() -> list:
+#     conn_uri = ("postgresql://robot-startml-ro:pheiph0hahj1Vaif@postgres.lab.karpov.courses:6432/startml")
+#
+#     engine = create_engine(conn_uri)
+#     conn = engine.connect().execution_options(stream_results=True)
+#
+#     post_query = ("""SELECT * FROM public.post_info_dl""")
+#
+#     user_query = text(f"""
+#         SELECT
+#             user_id,
+#             gender,
+#             age,
+#             country,
+#             city,
+#             exp_group,
+#             os,
+#             source
+#         FROM public.user_data
+#         WHERE user_id = {id}
+#         """)
+#
+#     feed_query = text(f"""
+#     SELECT distinct user_id, post_id
+#     FROM public.feed_action
+#     WHERE action='like' and user_id = {id}
+#     """)
+#
+#     post_like = batch_load_sql(feed_query)
+#
+#     post_info = pd.read_sql(post_query, con=conn)
+#     # post_info.drop('index', axis=1, inplace=True)
+#
+#     user_info = pd.read_sql(user_query, con=conn)
+#     # user_info.drop('index', axis=1, inplace=True)
+#
+#     return [post_like, post_info, user_info]
 
 def load_features() -> list:
     conn = ("postgresql://robot-startml-ro:pheiph0hahj1Vaif@"
@@ -150,36 +151,44 @@ def load_features() -> list:
     WHERE action='like'
     """
 
+    logger.info(f"Loading DataBase all liked Posts")
     post_like = batch_load_sql(post_like_query)
 
+    logger.info(f"Loading DataBase Posts")
     post_info = pd.read_sql('SELECT * FROM public.post_info_dl', con=conn)
     # post_info.drop('index', axis=1, inplace=True)
 
+    logger.info(f"Loading DataBase Users")
     user_info = pd.read_sql('SELECT * FROM public.user_info', con=conn)
     # user_info.drop('index', axis=1, inplace=True)
 
     return [post_like, post_info, user_info]
 
+
 model = load_models()
 data_bases = load_features()
 
+
 def user_recomendation(id: int, time: datetime, limit: int) -> dict:
+
+    logger.info(f"User_id: {id}")
+    logger.info("Reading features for predicting")
     user = data_bases[2].query('user_id == @id').drop('user_id', axis=1)
     posts = data_bases[1].drop('text', axis=1)
     post_like = data_bases[0]
     recommendation = data_bases[1]
 
-
+    logger.info("Zipping user")
     user_features = dict(zip(user.columns, user.values[0]))
 
     post_features = posts.assign(**user_features)
     post_features = post_features.set_index(['post_id'])
 
+    logger.info("Adding time info")
     post_features['hour'] = time.hour
     post_features['month'] = time.month
 
-    #print(post_features.columns)
-
+    logger.info("Assigning user and posts db")
     predict = model.predict_proba(post_features)[:, 1]
     post_features['predict'] = predict
 
