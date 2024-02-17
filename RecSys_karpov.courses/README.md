@@ -113,3 +113,5 @@
 
 Архитектура сервиса: 
 - Поступает id конкретного пользователя (реализация в test_), после чего икросервис загружает данные с серверов Postgresql, производятся вычисления и микросервис возвращает n лучших рекоментаций, которые юзер еще не лайкал.
+- Была создана модель [model_control](https://github.com/babuhinalex/PetProjects/blob/main/RecSys_karpov.courses/model_control) основанная только с использованием Machine Learning, под нее был реализован микросервис [MicroServiceML](https://github.com/babuhinalex/PetProjects/blob/main/RecSys_karpov.courses/MicroServiceML.py). После этого была создана модель с использованием [model_test](https://github.com/babuhinalex/PetProjects/blob/main/RecSys_karpov.courses/model_test) Deep Learning. 
+- Чтобы разделить юзеров и провести А-В тесты был создан сервис [MicroServiceAB_test](https://github.com/babuhinalex/PetProjects/blob/main/RecSys_karpov.courses/MicroServiceAB_test.py). В последующем, после того, как статистически было доказано, что новая модель лучше старой - был разработан новый микросервис непосредственно под новую модель. 
