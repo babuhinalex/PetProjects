@@ -18,7 +18,7 @@ def get_model_path(path: str) -> str:
 
 
 def load_models():
-    model_path = get_model_path("catboost_model_3")
+    model_path = get_model_path("model_control")
     from_file = CatBoostClassifier()
     from_file.load_model(model_path)
     logger.info(f"Loading model")
