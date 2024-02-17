@@ -90,3 +90,19 @@
 * category-encoders==2.5.0
 * loguru==0.6.0
 * implicit==0.5.2
+
+
+<h2>Описание работы микросервиса</h2>
+
+Файлы микросервиса: 
+* [MicroServiceML](https://github.com/babuhinalex/PetProjects/blob/main/RecSys_karpov.courses/MicroServiceML.py)
+* [MicroServiceAB_test](https://github.com/babuhinalex/PetProjects/blob/main/RecSys_karpov.courses/MicroServiceAB_test.py)
+* [MicroServiceDL](https://github.com/babuhinalex/PetProjects/blob/main/RecSys_karpov.courses/MicroServiceDL.py)
+
+Файлы запуска микросервисов: 
+* [test_ML](https://github.com/babuhinalex/PetProjects/blob/main/RecSys_karpov.courses/test_ML.py)
+* [test_A-B](https://github.com/babuhinalex/PetProjects/blob/main/RecSys_karpov.courses/test_A-B.py)
+* [test_DL](https://github.com/babuhinalex/PetProjects/blob/main/RecSys_karpov.courses/test_DL.py)
+
+Архитектура сервиса: 
+- Поступает id конкретного пользователя (реализация в test_), после чего икросервис загружает данные с серверов Postgresql, производятся вычисления и микросервис возвращает n лучших рекоментаций, которые юзер еще не лайкал.
