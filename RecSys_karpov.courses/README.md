@@ -104,5 +104,12 @@
 * [test_A-B](https://github.com/babuhinalex/PetProjects/blob/main/RecSys_karpov.courses/test_A-B.py)
 * [test_DL](https://github.com/babuhinalex/PetProjects/blob/main/RecSys_karpov.courses/test_DL.py)
 
+Файлы схем классов: 
+* [schema](https://github.com/babuhinalex/PetProjects/blob/main/RecSys_karpov.courses/schema.py)
+
+Используемые модели:
+* [model_test](https://github.com/babuhinalex/PetProjects/blob/main/RecSys_karpov.courses/model_test) - тестовая модель с использованием DL
+* [model_control](https://github.com/babuhinalex/PetProjects/blob/main/RecSys_karpov.courses/model_control) - рабочая модель основанная только на ML
+
 Архитектура сервиса: 
 - Поступает id конкретного пользователя (реализация в test_), после чего икросервис загружает данные с серверов Postgresql, производятся вычисления и микросервис возвращает n лучших рекоментаций, которые юзер еще не лайкал.
