@@ -9,3 +9,4 @@ psycopg2-binary==2.9.3
 category-encoders==2.5.0
 loguru==0.6.0
 implicit==0.5.2
+python-dotenv==0.20.0
