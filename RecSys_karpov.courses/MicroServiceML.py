@@ -1,12 +1,19 @@
 import os
-from catboost import CatBoostClassifier
-import pandas as pd
-from sqlalchemy import create_engine
-from typing import List
-from fastapi import FastAPI
-from schema import PostGet
+from os import getenv
 from datetime import datetime
+import hashlib
+from typing import List, Tuple
+import pandas as pd
+from catboost import CatBoostClassifier
+from fastapi import FastAPI
 from loguru import logger
+from schema import PostGet, Response
+from sqlalchemy import create_engine
+from dotenv import load_dotenv, find_dotenv
+
+app = FastAPI()
+load_dotenv()
+conn_uri = os.getenv("CONN_URI")
 
 
 def get_model_path(path: str) -> str:
@@ -28,10 +35,7 @@ def load_models():
 def batch_load_sql(query: str) -> pd.DataFrame:
 
     CHUNKSIZE = 200000
-    engine = create_engine(
-        "postgresql://robot-startml-ro:pheiph0hahj1Vaif@"
-        "postgres.lab.karpov.courses:6432/startml"
-    )
+    engine = create_engine(conn_uri)
     conn = engine.connect().execution_options(stream_results=True)
     chunks = []
     for chunk_dataframe in pd.read_sql(query, conn, chunksize=CHUNKSIZE):
@@ -42,8 +46,6 @@ def batch_load_sql(query: str) -> pd.DataFrame:
 
 
 def load_features() -> list:
-    conn = ("postgresql://robot-startml-ro:pheiph0hahj1Vaif@"
-            "postgres.lab.karpov.courses:6432/startml")
 
     post_like_query = """
     SELECT distinct user_id, post_id
@@ -55,11 +57,11 @@ def load_features() -> list:
     post_like = batch_load_sql(post_like_query)
 
     logger.info(f"Loading DataBase Posts")
-    post_info = pd.read_sql('SELECT * FROM public.post_info', con=conn)
+    post_info = pd.read_sql('SELECT * FROM public.post_info', con=conn_uri)
     post_info.drop('index', axis=1, inplace=True)
 
     logger.info(f"Loading DataBase Users")
-    user_info = pd.read_sql('SELECT * FROM public.user_info', con=conn)
+    user_info = pd.read_sql('SELECT * FROM public.user_info', con=conn_uri)
     # user_info.drop('index', axis=1, inplace=True)
 
     return [post_like, post_info, user_info]
