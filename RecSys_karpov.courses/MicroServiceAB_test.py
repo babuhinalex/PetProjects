@@ -1,16 +1,19 @@
 import os
+from os import getenv
 from datetime import datetime
 import hashlib
 from typing import List, Tuple
 import pandas as pd
-import catboost
 from catboost import CatBoostClassifier
 from fastapi import FastAPI
 from loguru import logger
 from schema import PostGet, Response
 from sqlalchemy import create_engine
+from dotenv import load_dotenv, find_dotenv
 
 app = FastAPI()
+load_dotenv()
+conn_uri = os.getenv("CONN_URI")
 
 
 def batch_load_sql(query: str) -> pd.DataFrame:
@@ -21,10 +24,7 @@ def batch_load_sql(query: str) -> pd.DataFrame:
     :return: Возвращает базу данных по запросу
     """
 
-    engine = create_engine(
-        "postgresql://robot-startml-ro:pheiph0hahj1Vaif@"
-        "postgres.lab.karpov.courses:6432/startml"
-    )
+    engine = create_engine(conn_uri)
     conn = engine.connect().execution_options(stream_results=True)
     chunks = []
     for chunk_dataframe in pd.read_sql(query, conn, chunksize=200000):
@@ -44,7 +44,6 @@ def load_raw_features() -> list:
     :return: Список с тремя базами данных.
     """
 
-    conn_uri = "postgresql://robot-startml-ro:pheiph0hahj1Vaif@postgres.lab.karpov.courses:6432/startml"
     engine = create_engine(conn_uri)
     conn = engine.connect().execution_options(stream_results=True)
 
